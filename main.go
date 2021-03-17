@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"sort"
 )
 
 func main() {
@@ -74,9 +75,46 @@ func (s *Searcher) Load(filename string) error {
 
 func (s *Searcher) Search(query string) []string {
 	idxs := s.SuffixArray.Lookup([]byte(query), -1)
+	
+	var sortidxs sort.IntSlice
+	sortidxs = idxs
+	sortidxs.Sort()
+	
 	results := []string{}
-	for _, idx := range idxs {
-		results = append(results, s.CompleteWorks[idx-250:idx+250])
+	if sortidxs == nil{
+		norows := fmt.Sprintf("%s is not present. The word searched is case sensitive.",query) 
+		results = append(results,norows)
+	}else{ 
+		for _, idx := range sortidxs {
+			
+			sentence := s.CompleteWorks[idx-251:idx+251]
+			formatted := getformatedsentence(sentence)
+			results = append(results, formatted)
+		}
 	}
 	return results
+}
+
+
+func getformatedsentence(sentence string)string{
+	 const space = ' '
+	 const newline = '\n'
+	 
+	 if sentence[0] != space{
+		for i:=1;i<len(sentence);i++{
+			if sentence[i] == space || sentence[i] == newline{
+				sentence = sentence[i+1:]
+				break
+			}
+		} 
+	 }
+	 for i:=len(sentence)-1;i>=0;i--{
+		if sentence[i] == space || sentence[i] == newline{
+			sentence = sentence[:i]
+			break
+		}
+	} 
+	
+	return sentence
+	 
 }
